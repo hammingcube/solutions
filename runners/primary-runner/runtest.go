@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/cespare/diff"
 	"io"
 	"io/ioutil"
 	"log"
@@ -76,9 +77,8 @@ func main() {
 
 	generator.Run()
 
-	areDifferent := diff2(r1, r2)
 	status := PENDING
-	if areDifferent {
+	if areDifferent(r1, r2) {
 		status = FAILURE
 	} else {
 		status = SUCCESS
@@ -92,6 +92,9 @@ func main() {
 	if err != nil || err1 != nil {
 		fmt.Println(err, err1)
 	}
+	log.Printf("%s\n", statusJson)
+	log.Printf("%s\n", w1Log.Bytes())
+	log.Printf("%s\n", w2Log.Bytes())
 	ioutil.WriteFile("input.txt", inputLog.Bytes(), 0644)
 	ioutil.WriteFile("out1.txt", w1Log.Bytes(), 0644)
 	ioutil.WriteFile("out2.txt", w2Log.Bytes(), 0644)
@@ -100,6 +103,24 @@ func main() {
 	//fmt.Printf("inputLog: %s\n", &inputLog)
 	//fmt.Printf("w1Log: %s\n", &w1Log)
 	//fmt.Printf("w2Log: %s\n", &w2Log)
+}
+
+func areDifferent(r1, r2 io.Reader) bool {
+	same := false
+	iw1 := bufio.NewWriter(&w1Log)
+	iw2 := bufio.NewWriter(&w2Log)
+
+	defer iw1.Flush()
+	defer iw2.Flush()
+
+	tr1 := io.TeeReader(r1, iw1)
+	tr2 := io.TeeReader(r2, iw2)
+
+	same, err := diff.Readers(tr1, tr2)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return same
 }
 
 func diff2(r1, r2 io.Reader) bool {
