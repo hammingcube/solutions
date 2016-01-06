@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/cespare/diff"
 	"io"
 	"io/ioutil"
 	"log"
@@ -116,7 +115,7 @@ func areDifferent(r1, r2 io.Reader) bool {
 	tr1 := io.TeeReader(r1, iw1)
 	tr2 := io.TeeReader(r2, iw2)
 
-	same, err := diff.Readers(tr1, tr2)
+	same, err := DiffReaders(tr1, tr2)
 	if err != nil {
 		log.Fatal(err)
 	}
